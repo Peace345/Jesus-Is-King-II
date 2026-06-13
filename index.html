@@ -73,15 +73,28 @@ let currentAlbum = {
   cover: "jesusiskingiicover.jpg",
   songs: [
       { file: "dontgiveup.mp3", title: "Don't Give Up", artist: "Kanye West, CyHi the Prynce" },
-      { file: "thisistheglory.mp3", title: "This Is The Glory (v4)", artist: "Kanye West, Snoop Dogg, Dr. Dre, Dem Jointz" },
+      { file: "thisistheglory.mp3", title: "This Is The Glory", artist: "Kanye West, Snoop Dogg, Dr. Dre, Dem Jointz" },
       { file: "wakethedead.mp3", title: "Wake The Dead", artist: "Kanye West" },
       { file: "findaway.mp3", title: "Find A Way", artist: "Kanye West" },
       { file: "bound3thisistheday.mp3", title: "Bound 3/This Is The Day", artist: "Kanye West, Consequence" },
       { file: "handsonremix.mp3", title: "Hands On (Remix)", artist: "Kanye West, Travis Scott" },
       { file: "alldreamsreal.mp3", title: "All Dreams Real", artist: "Kanye West" },
-      { file: "lamonsterv10.mp3", title: "LA Monster (v10)", artist: "Kanye West" },
-      { file: "lamonsterv12.mp3", title: "LA Monster (v12)", artist: "Kanye West, A$AP Ferg" },
-      { file: "upfromtheashesv20.mp3", title: "Up From The Ashes (v20)", artist: "Kanye West, Sunday Service Choir, Marsha Ambrosius, Anderson .Paak" }
+      {
+        title: "LA Monster",
+        versions: [
+      {
+        version: "V12",
+        file: "lamonsterv12.mp3",
+        artist: "Kanye West, A$AP Ferg"
+      },
+      {
+        version: "V10",
+        file: "lamonsterv10.mp3",
+        artist: "Kanye West"
+      }
+    ]
+  },
+      { file: "upfromtheashesv20.mp3", title: "Up From The Ashes", artist: "Kanye West, Sunday Service Choir, Marsha Ambrosius, Anderson .Paak" }
   ]
 };
 
@@ -102,18 +115,80 @@ function buildSongs() {
   songsDiv.innerHTML = "";
 
   currentAlbum.songs.forEach((song, i) => {
-    const div = document.createElement("div");
-    div.className = "song";
 
-    div.innerHTML = `
-      <strong>${song.title}</strong><br>
-      <small>${song.artist || ""}</small>
-    `;
+    // SONG WITH MULTIPLE VERSIONS
+    if (song.versions) {
 
-    div.onclick = () => playSong(i);
+      const group = document.createElement("div");
+      group.className = "song";
 
-    songsDiv.appendChild(div);
+      group.innerHTML = `<strong>${song.title} ▼</strong>`;
+
+      group.onclick = () => {
+
+        // prevent duplicates
+        if (group.dataset.opened) return;
+        group.dataset.opened = true;
+
+        song.versions.forEach(version => {
+
+          const div = document.createElement("div");
+          div.className = "song";
+
+          div.innerHTML = `
+            <div style="display:flex; align-items:center;">
+              <div style="width:60px;">
+                <strong>${version.version}</strong>
+              </div>
+
+              <div style="flex:1; text-align:center;">
+                <strong>${song.title}</strong><br>
+                <small>${version.artist}</small>
+              </div>
+            </div>
+          `;
+
+          div.onclick = (e) => {
+            e.stopPropagation();
+
+            window.audio.src = version.file;
+            window.audio.play();
+
+            updateMediaSession({
+              title: song.title,
+              artist: version.artist
+            });
+          };
+
+          group.after(div);
+
+        });
+
+      };
+
+      songsDiv.appendChild(group);
+
+    }
+
+    // NORMAL SONG
+    else {
+
+      const div = document.createElement("div");
+      div.className = "song";
+
+      div.innerHTML = `
+        <strong>${song.title}</strong><br>
+        <small>${song.artist || ""}</small>
+      `;
+
+      div.onclick = () => playSong(i);
+
+      songsDiv.appendChild(div);
+
+    }
+
   });
+
 }
 
 // PLAY SONG
